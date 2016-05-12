@@ -9,9 +9,8 @@
 import UIKit
 import Contacts
 import Alamofire
-
-import AWSCore
 import AWSS3
+
 
 class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -19,17 +18,13 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     let imagePicker = UIImagePickerController()
     
-    // All contacts NOT in JSON
-    var finalContacts = [String: [String]]()
-    // Image to be sent to server
-    var imageData: NSData? = nil
-    
-    
     // URL of the image to be uploaded
     var imageURL: NSURL?
+    var contactsURL: NSURL?
     
     var imagePicked = 0
     var contactsAdded = 0
+    
     @IBOutlet weak var image: UIImageView!
     
     @IBAction func imageButtonTapped(sender: AnyObject) {
@@ -43,10 +38,13 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
         
+        // Image to be sent to server
+        var imageData: NSData? = nil
+        
         
         if let pickedImage = info[UIImagePickerControllerOriginalImage] as? UIImage {
             // Save data to be uploaded
-            self.imageData  = UIImagePNGRepresentation(pickedImage)
+            imageData  = UIImagePNGRepresentation(pickedImage)
             
             //upload code
             let uploadFileURL = info[UIImagePickerControllerReferenceURL] as! NSURL
@@ -76,7 +74,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         let contactStore = CNContactStore()
         let keysToFetch = [
             CNContactFormatter.descriptorForRequiredKeysForStyle(.FullName),
-            CNContactEmailAddressesKey,
             CNContactPhoneNumbersKey,
         ]
         
@@ -107,6 +104,10 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     @IBAction func getContacts(sender: UIButton) {
         
+        
+        // All contacts NOT in JSON
+        var contactsData = [String: [String]]()
+        
         for var contact in contacts {
             
             var name = ("\(contact.givenName) \(contact.familyName)")
@@ -118,17 +119,27 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
                 numbers.append("\(finalNumber.stringValue)")
             }
             
-            self.finalContacts[name] = numbers
+            contactsData[name] = numbers
         }
-        print(finalContacts)
+        print(contactsData)
         
         do {
             
             // serialize data into JSOn
-            let jsonData = try NSJSONSerialization.dataWithJSONObject(finalContacts, options: NSJSONWritingOptions.PrettyPrinted)
+            let jsonData = try NSJSONSerialization.dataWithJSONObject(contactsData, options: NSJSONWritingOptions.PrettyPrinted)
             
             let string = NSString(data: jsonData, encoding: NSUTF8StringEncoding)
             print(string)
+            
+//            let documentsDirectoryPathString = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true).first!
+//            let documentsDirectoryPath = NSURL(string: documentsDirectoryPathString)!
+//            
+//
+//            if let file = NSFileHandle(forWritingAtPath:documentsDirectoryPath) {
+//                file.writeData(string)
+//            }
+//
+            self.contactsAdded = 1
             
             
         }catch let error as NSError{
@@ -142,23 +153,42 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         
         print("upload button tapped")
         
-        if (imagePicked == 1) {
+        if (imagePicked == 1 && self.contactsAdded == 1) {
             
-            print("making POST request")
-            // make post request to s3
+            let credentialsProvider = AWSCognitoCredentialsProvider(regionType:.USEast1,
+                                                                    identityPoolId:"us-east-1:4e039830-2c72-488c-b583-2ff365c828dd")
             
-            Alamofire.request(.GET, "https://httpbin.org/get", parameters: ["foo": "bar"])
-                .responseJSON { response in
-                    print(response.request)  // original URL request
-                    print(response.response) // URL response
-                    print(response.data)     // server data
-                    print(response.result)   // result of response serialization
-                    
-                    if let JSON = response.result.value {
-                        print("JSON: \(JSON)")
-                    }
+            let configuration = AWSServiceConfiguration(region:.USEast1, credentialsProvider:credentialsProvider)
+            
+            AWSServiceManager.defaultServiceManager().defaultServiceConfiguration = configuration
+            
+            let uploadRequest = AWSS3TransferManagerUploadRequest()
+            uploadRequest.body = imageURL
+            uploadRequest.key = NSProcessInfo.processInfo().globallyUniqueString + "." + "png"
+            uploadRequest.bucket = S3BucketName
+            uploadRequest.contentType = "image/" + "png"
+            
+            let transferManager = AWSS3TransferManager.defaultS3TransferManager()
+            transferManager.upload(uploadRequest).continueWithBlock { (task) -> AnyObject! in
+                if let error = task.error {
+                    print("Upload failed ❌ (\(error))")
+                }
+                if let exception = task.exception {
+                    print("Upload failed ❌ (\(exception))")
+                }
+                if task.result != nil {
+                    let s3URL = NSURL(string: "http://s3.amazonaws.com/\(self.S3BucketName)/\(uploadRequest.key!)")!
+                    print("Uploaded to:\n\(s3URL)")
+                }
+                else {
+                    print("Unexpected empty result.")
+                }
+                return nil
             }
-            
+        
+        } else {
+            // Tasks not completed yet
+            print("Tasks not completed yet")
         }
     }
     
@@ -167,10 +197,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         super.viewDidLoad()
         
         imagePicker.delegate = self
-        
-//        print(amazonS3Manager.getObject("/"))
-        
-        // Do any additional setup after loading the view, typically from a nib.
     }
     
     override func didReceiveMemoryWarning() {
