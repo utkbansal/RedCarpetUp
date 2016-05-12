@@ -36,6 +36,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         presentViewController(imagePicker, animated: true, completion: nil)
     }
     
+    @IBOutlet weak var imageSelectCheck: UIImageView!
+    @IBOutlet weak var contactSelectCheck: UIImageView!
     
     
     func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
@@ -61,6 +63,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             image.contentMode = .ScaleAspectFit
             image.image = pickedImage
             self.imagePicked = 1
+            imageSelectCheck.hidden = false
         }
         
         dismissViewControllerAnimated(true, completion: nil)
@@ -131,6 +134,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             contactsJSONString = NSString(data: jsonData, encoding: NSUTF8StringEncoding)
             print(contactsJSONString)
             self.contactsAdded = 1
+            contactSelectCheck.hidden = false
             
             
         }catch let error as NSError{
@@ -175,10 +179,17 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             createContactsFile()
             uploadImage()
             uploadContacts()
+            
+            
         
         } else {
             // Tasks not completed yet
             print("Tasks not completed yet")
+            
+            let alert = UIAlertController(title: "", message: "Tasks not completed yet", preferredStyle: UIAlertControllerStyle.Alert)
+            alert.addAction(UIAlertAction(title: "Click", style: UIAlertActionStyle.Default, handler: nil))
+            self.presentViewController(alert, animated: true, completion: nil)
+            
         }
     }
     
@@ -241,6 +252,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         super.viewDidLoad()
         
         imagePicker.delegate = self
+        imageSelectCheck.hidden = true
+        contactSelectCheck.hidden = true
     }
     
     override func didReceiveMemoryWarning() {
