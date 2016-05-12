@@ -40,14 +40,14 @@
                                             </mask>
                                         </variation>
                                     </imageView>
-                                    <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9Cm-tm-z2V">
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9Cm-tm-z2V">
                                         <rect key="frame" x="112" y="41" width="418" height="30"/>
                                         <state key="normal" title="Select image"/>
                                         <connections>
                                             <action selector="imageButtonTapped:" destination="BYZ-38-t0r" eventType="touchUpInside" id="vLe-Sg-hJA"/>
                                         </connections>
                                     </button>
-                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="done" translatesAutoresizingMaskIntoConstraints="NO" id="wZO-nX-WTg">
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="done" translatesAutoresizingMaskIntoConstraints="NO" id="wZO-nX-WTg">
                                         <rect key="frame" x="530" y="41" width="30" height="30"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="30" id="CDh-JZ-UFe"/>

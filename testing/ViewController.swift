@@ -186,9 +186,16 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             // Tasks not completed yet
             print("Tasks not completed yet")
             
-            let alert = UIAlertController(title: "", message: "Tasks not completed yet", preferredStyle: UIAlertControllerStyle.Alert)
-            alert.addAction(UIAlertAction(title: "Click", style: UIAlertActionStyle.Default, handler: nil))
+            let alert = UIAlertController(title: "", message: "You haven't selected an image or added contact book info!", preferredStyle: UIAlertControllerStyle.Alert)
+            alert.addAction(UIAlertAction(title: "Okay", style: UIAlertActionStyle.Default, handler: nil))
             self.presentViewController(alert, animated: true, completion: nil)
+            
+            let delay = 1.0 * Double(NSEC_PER_SEC)
+            var time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
+            dispatch_after(time, dispatch_get_main_queue(), {
+                alert.dismissViewControllerAnimated(true, completion: nil)
+            })
+
             
         }
     }
@@ -211,6 +218,9 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             if task.result != nil {
                 let s3URL = NSURL(string: "http://s3.amazonaws.com/\(self.S3BucketName)/\(uploadRequest.key!)")!
                 print("Uploaded to:\n\(s3URL)")
+                
+                self.createAlert("Photo uploaded sucessfully")
+
             }
             else {
                 print("Unexpected empty result.")
@@ -238,6 +248,10 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             if task.result != nil {
                 let s3URL = NSURL(string: "http://s3.amazonaws.com/\(self.S3BucketName)/\(uploadRequest.key!)")!
                 print("JSON Uploaded to:\n\(s3URL)")
+                
+                self.createAlert("Contacts Uploaded Sucessfully")
+
+                
             }
             else {
                 print("Unexpected empty result.")
@@ -245,6 +259,19 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             return nil
         }
 
+    }
+    
+    func createAlert(text:String)  {
+        let alert = UIAlertController(title: "", message: "Contact Uploaded successfully", preferredStyle: UIAlertControllerStyle.Alert)
+        alert.addAction(UIAlertAction(title: "Okay", style: UIAlertActionStyle.Default, handler: nil))
+        self.presentViewController(alert, animated: true, completion: nil)
+        
+//        let delay = 13.0 * Double(NSEC_PER_SEC)
+//        var time = dispatch_time(DISPATCH_TIME_NOW, Int64(delay))
+//        dispatch_after(time, dispatch_get_main_queue(), {
+//            alert.dismissViewControllerAnimated(true, completion: nil)
+//        })
+//
     }
     
     
