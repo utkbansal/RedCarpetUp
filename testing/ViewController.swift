@@ -37,6 +37,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     }
     
     
+    
     func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
         
         // Image to be sent to server
@@ -139,16 +140,11 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     }
     
     func createContactsFile()  {
-        let documentsDirectoryPathString = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true).first!
-        let documentsDirectoryPath = NSURL(string: documentsDirectoryPathString)!
-        
-        
-        let contactsURL = documentsDirectoryPath.URLByAppendingPathComponent("contacts.json")
-        
-        let fileManager = NSFileManager.defaultManager()
         
         if let dir = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.AllDomainsMask, true).first {
             let path = NSURL(fileURLWithPath: dir).URLByAppendingPathComponent("contacts.json")
+            
+            contactsURL = path
             
             //writing
             do {
@@ -156,7 +152,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
                 print("file written")
             }
             catch {
-                /* error handling here */
                 print("cant write to file")
             }
             
@@ -164,8 +159,10 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
                 let text2 = try NSString(contentsOfURL: path, encoding: NSUTF8StringEncoding)
                 
                 print(text2)
+            } catch {
+                /* error handling here */
+            
             }
-            catch {/* error handling here */}
             
             
         }
@@ -173,48 +170,70 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     
     @IBAction func uploadTapped(sender: UIButton) {
-        
-        print("upload button tapped")
-        
         if (imagePicked == 1 && self.contactsAdded == 1) {
             
-            let credentialsProvider = AWSCognitoCredentialsProvider(regionType:.USEast1,
-                                                                    identityPoolId:"us-east-1:4e039830-2c72-488c-b583-2ff365c828dd")
-            
-            let configuration = AWSServiceConfiguration(region:.USEast1, credentialsProvider:credentialsProvider)
-            
-            AWSServiceManager.defaultServiceManager().defaultServiceConfiguration = configuration
-            
-            let uploadRequest = AWSS3TransferManagerUploadRequest()
-            uploadRequest.body = imageURL
-            uploadRequest.key = NSProcessInfo.processInfo().globallyUniqueString + "." + "png"
-            uploadRequest.bucket = S3BucketName
-            uploadRequest.contentType = "image/" + "png"
-            
-            let transferManager = AWSS3TransferManager.defaultS3TransferManager()
-            transferManager.upload(uploadRequest).continueWithBlock { (task) -> AnyObject! in
-                if let error = task.error {
-                    print("Upload failed ❌ (\(error))")
-                }
-                if let exception = task.exception {
-                    print("Upload failed ❌ (\(exception))")
-                }
-                if task.result != nil {
-                    let s3URL = NSURL(string: "http://s3.amazonaws.com/\(self.S3BucketName)/\(uploadRequest.key!)")!
-                    print("Uploaded to:\n\(s3URL)")
-                }
-                else {
-                    print("Unexpected empty result.")
-                }
-                return nil
-            }
-            
             createContactsFile()
+            uploadImage()
+            uploadContacts()
         
         } else {
             // Tasks not completed yet
             print("Tasks not completed yet")
         }
+    }
+    
+    func uploadImage()  {
+        let uploadRequest = AWSS3TransferManagerUploadRequest()
+        uploadRequest.body = imageURL
+        uploadRequest.key = NSProcessInfo.processInfo().globallyUniqueString + "." + "png"
+        uploadRequest.bucket = S3BucketName
+        uploadRequest.contentType = "image/" + "png"
+        
+        let transferManager = AWSS3TransferManager.defaultS3TransferManager()
+        transferManager.upload(uploadRequest).continueWithBlock { (task) -> AnyObject! in
+            if let error = task.error {
+                print("Upload failed ❌ (\(error))")
+            }
+            if let exception = task.exception {
+                print("Upload failed ❌ (\(exception))")
+            }
+            if task.result != nil {
+                let s3URL = NSURL(string: "http://s3.amazonaws.com/\(self.S3BucketName)/\(uploadRequest.key!)")!
+                print("Uploaded to:\n\(s3URL)")
+            }
+            else {
+                print("Unexpected empty result.")
+            }
+            return nil
+        }
+
+    }
+    
+    func uploadContacts()  {
+        let uploadRequest = AWSS3TransferManagerUploadRequest()
+        uploadRequest.body = contactsURL
+        uploadRequest.key = NSProcessInfo.processInfo().globallyUniqueString + "." + "json"
+        uploadRequest.bucket = S3BucketName
+        uploadRequest.contentType = "application/json"
+        
+        let transferManager = AWSS3TransferManager.defaultS3TransferManager()
+        transferManager.upload(uploadRequest).continueWithBlock { (task) -> AnyObject! in
+            if let error = task.error {
+                print("Upload failed ❌ (\(error))")
+            }
+            if let exception = task.exception {
+                print("Upload failed ❌ (\(exception))")
+            }
+            if task.result != nil {
+                let s3URL = NSURL(string: "http://s3.amazonaws.com/\(self.S3BucketName)/\(uploadRequest.key!)")!
+                print("JSON Uploaded to:\n\(s3URL)")
+            }
+            else {
+                print("Unexpected empty result.")
+            }
+            return nil
+        }
+
     }
     
     
