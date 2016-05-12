@@ -20,6 +20,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     // URL of the image to be uploaded
     var imageURL: NSURL?
+    var contactsJSONString: NSString?
     var contactsURL: NSURL?
     
     var imagePicked = 0
@@ -104,10 +105,9 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     @IBAction func getContacts(sender: UIButton) {
         
-        
-        // All contacts NOT in JSON
         var contactsData = [String: [String]]()
         
+        // MAke a list of all contacts in text format
         for var contact in contacts {
             
             var name = ("\(contact.givenName) \(contact.familyName)")
@@ -121,24 +121,14 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             
             contactsData[name] = numbers
         }
-        print(contactsData)
         
+        // serialize data into JSON
         do {
             
-            // serialize data into JSOn
             let jsonData = try NSJSONSerialization.dataWithJSONObject(contactsData, options: NSJSONWritingOptions.PrettyPrinted)
             
-            let string = NSString(data: jsonData, encoding: NSUTF8StringEncoding)
-            print(string)
-            
-//            let documentsDirectoryPathString = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true).first!
-//            let documentsDirectoryPath = NSURL(string: documentsDirectoryPathString)!
-//            
-//
-//            if let file = NSFileHandle(forWritingAtPath:documentsDirectoryPath) {
-//                file.writeData(string)
-//            }
-//
+            contactsJSONString = NSString(data: jsonData, encoding: NSUTF8StringEncoding)
+            print(contactsJSONString)
             self.contactsAdded = 1
             
             
@@ -146,6 +136,39 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             print(error.description)
         }
     
+    }
+    
+    func createContactsFile()  {
+        let documentsDirectoryPathString = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true).first!
+        let documentsDirectoryPath = NSURL(string: documentsDirectoryPathString)!
+        
+        
+        let contactsURL = documentsDirectoryPath.URLByAppendingPathComponent("contacts.json")
+        
+        let fileManager = NSFileManager.defaultManager()
+        
+        if let dir = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.AllDomainsMask, true).first {
+            let path = NSURL(fileURLWithPath: dir).URLByAppendingPathComponent("contacts.json")
+            
+            //writing
+            do {
+                try contactsJSONString!.writeToURL(path, atomically: false, encoding: NSUTF8StringEncoding)
+                print("file written")
+            }
+            catch {
+                /* error handling here */
+                print("cant write to file")
+            }
+            
+            do {
+                let text2 = try NSString(contentsOfURL: path, encoding: NSUTF8StringEncoding)
+                
+                print(text2)
+            }
+            catch {/* error handling here */}
+            
+            
+        }
     }
     
     
@@ -185,6 +208,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
                 }
                 return nil
             }
+            
+            createContactsFile()
         
         } else {
             // Tasks not completed yet
