@@ -1,0 +1,16 @@
+PODS:
+  - Alamofire (3.4.0)
+  - AWSCore (2.4.1)
+  - AWSS3 (2.4.1):
+    - AWSCore (= 2.4.1)
+
+DEPENDENCIES:
+  - Alamofire (~> 3.4)
+  - AWSS3
+
+SPEC CHECKSUMS:
+  Alamofire: c19a627cefd6a95f840401c49ab1f124e07f54ee
+  AWSCore: 9bfd632f04aaf12053e639d2a9120372844beb0d
+  AWSS3: d7a3a694ffc4010e90b14755b5b9dbf70989c117
+
+COCOAPODS: 0.39.0
